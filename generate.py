@@ -1,30 +1,35 @@
+import sys
 from PIL import Image
 
 
-WIDTH = 150
-HEIGHT = 90
+WIDTH = 260
+HEIGHT = 145
+COLORMODE = "RGBA"
+EXTENSION = ".png"
+
+srcdir = sys.argv[1]
 
 
 BASE_IMAGES = {
-    'sun': Image.open('srcimgs/sun.png'),
-    'cloud': Image.open('srcimgs/cloud.png'),
-    'rain': Image.open('srcimgs/rain.png'),
-    'snow': Image.open('srcimgs/snow.png'),
-    'mist': Image.open('srcimgs/mist.png'),
-    'rain_thunder': Image.open('srcimgs/rain_thunder.png'),
-    'snow_thunder': Image.open('srcimgs/snow_thunder.png'),
-    'rain_heavy': Image.open('srcimgs/rain_heavy.png'),
-    'snow_heavy': Image.open('srcimgs/snow_heavy.png'),
-    'rain_wind': Image.open('srcimgs/rain_wind.png'),
-    'snow_wind': Image.open('srcimgs/snow_wind.png'),
-    'rain_heavy_wind': Image.open('srcimgs/rain_heavy_wind.png'),
-    'rain_or_snow': Image.open('srcimgs/rain_and_snow.png'),
-    'snow_or_rain': Image.open('srcimgs/rain_and_snow.png'),
-    'rain_and_snow': Image.open('srcimgs/rain_and_snow.png'),
-    'night_fair': Image.open('srcimgs/fair_night.png'),
+    'sun': Image.open(f'{srcdir}/sun.png'),
+    'cloud': Image.open(f'{srcdir}/cloud.png'),
+    'rain': Image.open(f'{srcdir}/rain.png'),
+    'snow': Image.open(f'{srcdir}/snow.png'),
+    'mist': Image.open(f'{srcdir}/mist.png'),
+    'rain_thunder': Image.open(f'{srcdir}/rain_thunder.png'),
+    'snow_thunder': Image.open(f'{srcdir}/snow_thunder.png'),
+    'rain_heavy': Image.open(f'{srcdir}/rain_heavy.png'),
+    'snow_heavy': Image.open(f'{srcdir}/snow_heavy.png'),
+    'rain_wind': Image.open(f'{srcdir}/rain_wind.png'),
+    'snow_wind': Image.open(f'{srcdir}/snow_wind.png'),
+    'rain_heavy_wind': Image.open(f'{srcdir}/rain_heavy_wind.png'),
+    'rain_or_snow': Image.open(f'{srcdir}/rain_and_snow.png'),
+    'snow_or_rain': Image.open(f'{srcdir}/rain_and_snow.png'),
+    'rain_and_snow': Image.open(f'{srcdir}/rain_and_snow.png'),
+    'night_fair': Image.open(f'{srcdir}/fair_night.png'),
 }
 
-MOD_TR_IMG = Image.open('srcimgs/tr.png')
+MOD_TR_IMG = Image.open(f'{srcdir}/tr.png')
 
 
 def composite(src, dst, pos, size=None):
@@ -42,12 +47,13 @@ def make_one(weather):
     return composite(img1, out, (left, 0), (HEIGHT, HEIGHT))
 
 
-def make_two(weather_from, weather_to):
+def make_two(weather_from, mod, weather_to):
     out = Image.new('RGBA', (WIDTH, HEIGHT), (255, 255, 255, 0))
     img1 = BASE_IMAGES[weather_to]
-    out = composite(img1, out, (WIDTH - HEIGHT, 0), (HEIGHT, HEIGHT))
+    d = 0 if mod == "tr" else HEIGHT // 8
+    out = composite(img1, out, (WIDTH - HEIGHT + d//2, d), (HEIGHT-2*d, HEIGHT-2*d))
     img2 = BASE_IMAGES[weather_from]
-    out = composite(img2, out, (0, 0), (HEIGHT, HEIGHT))
+    out = composite(img2, out, (d+d//2, 0), (HEIGHT, HEIGHT))
     return out
 
 
@@ -65,7 +71,7 @@ def make_weather_image(spec):
     t = spec.get('t')
 
     if t:
-        img = make_two(b, t)
+        img = make_two(b, m, t)
     else:
         img = make_one(b)
 
@@ -79,4 +85,4 @@ import json
 with open('codes.json', encoding='utf-8') as f:
     data = json.load(f)
     for code, spec in data.items():
-        make_weather_image(spec).save("output/" + code + '.png')
+        make_weather_image(spec).convert(COLORMODE).save("output/" + code + EXTENSION, quality=95)
